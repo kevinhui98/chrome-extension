@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "chrome-types": "^0.1.342",
+    "marked": "^15.0.7"
+  }
+}

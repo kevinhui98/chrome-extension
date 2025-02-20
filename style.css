@@ -1,0 +1,7 @@
+#inline-autocomplete {
+  position: absolute;
+  color: gray;
+  opacity: 0.6;
+  pointer-events: none;
+  white-space: nowrap;
+}
