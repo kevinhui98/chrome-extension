@@ -10,7 +10,7 @@
   "permission": [],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["<all_urls>", "https://docs.google.com/document/*"],
       "js": ["content.js"],
       "css": ["style.css"]
     }

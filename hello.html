@@ -1,17 +1,9 @@
 <html>
   <body>
     <h1>Enter your API KEY</h1>
-    <input type="password" id="openrouter-api-key" placeholder="Enter OpenRouter API Key" value="${OPENROUTER_API_KEY}">
+    <input type="password" id="openrouter-api-key" placeholder="Enter OpenRouter API Key" value=`${OPENROUTER_API_KEY}`>
     <button id="save-api-key">Submit</button>
     <div id="api-key-display"></div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const apiKey = localStorage.getItem('OPENROUTER_API_KEY') || 'No API Key saved';
-            const apiKeyDisplay = document.getElementById('api-key-display');
-            apiKeyDisplay.textContent = `Saved API Key: ${apiKey}`;
-        });
-    </script>
     <script src="popup.js"></script>
   </body>
 </html>

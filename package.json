@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
     "chrome-types": "^0.1.342",
+    "dotenv": "^16.4.7",
     "marked": "^15.0.7"
   }
 }
