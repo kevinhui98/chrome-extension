@@ -2,7 +2,7 @@ const INLINE_SUGGESTION_DELAY = 2000;
 let lastInlineRequest = null;
 let suggestionBox = null;
 let activeInput = null;
-
+let userInput = ""
 const OPENROUTER_API_KEY = "";
 // const OPENROUTER_API_KEY = "";
 const GROQ_API_KEY = ""
@@ -20,72 +20,83 @@ if (lastInlineRequest) {
     clearTimeout(lastInlineRequest);
 }
 
-async function fetchSuggestions(text) {
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "google/gemini-2.0-flash-lite-preview-02-05:free",
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are an inline code completion assistant. Return ONLY a SINGLE completion item containing:
-                                  - text: The suggested completion text
-                                  
-                                  The completion should:
-                                  1. Be a natural continuation of the current code
-                                  2. Be contextually relevant
-                                  3. Complete the current line or add a new line if appropriate
-                                  4. Be mindful of the punctuation 
-                                  
-                                  Keep suggestions concise and relevant.`,
-                    },
-                    {
-                        role: "user",
-                        content: `Current text: "${text}"`,
-                    },
-                ],
-            }),
-        });
-        const data = await response.json();
-        console.log(data)
-        console.log(data.choices[0].message.content)
-        return data.choices[0].message.content;
-    } catch (error) {
-        console.error("Autocomplete error openrouter:", error);
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${GROQ_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are an inline code completion assistant. given the following user trying into a textfield, take the context so far, and predict until the end of the sentence, just give me the rest of the completion:
+// async function fetchSuggestions(text) {
+//     try {
+//         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+//             },
+//             body: JSON.stringify({
+//                 model: "google/gemini-2.0-flash-lite-preview-02-05:free",
+//                 messages: [
+//                     {
+//                         role: "system",
+//                         content: `You are an inline code completion assistant. Return ONLY a SINGLE completion item containing:
+//                                   - text: The suggested completion text
 
-            Keep suggestions concise and relevant.`,
-                    },
-                    {
-                        role: "user",
-                        content: `Current text: "${text}"`,
-                    },
-                ],
-            }),
-        });
-        const data = await response.json();
-        console.log(data)
-        console.log(data.choices[0].message.content)
-        // const suggestion = JSON.parse(data.choices[0].message.content)[0];
-        return data.choices[0].message.content || "";
+//                                   The completion should:
+//                                   1. Be a natural continuation of the current code
+//                                   2. Be contextually relevant
+//                                   3. Complete the current line or add a new line if appropriate
+//                                   4. Be mindful of the punctuation 
+
+//                                   Keep suggestions concise and relevant.`,
+//                     },
+//                     {
+//                         role: "user",
+//                         content: `Current text: "${text}"`,
+//                     },
+//                 ],
+//             }),
+//         });
+//         const data = await response.json();
+//         console.log(data)
+//         console.log(data.choices[0].message.content)
+//         return data.choices[0].message.content;
+//     } catch (error) {
+//         console.error("Autocomplete error openrouter:", error);
+//         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 Authorization: `Bearer ${GROQ_API_KEY}`,
+//             },
+//             body: JSON.stringify({
+//                 model: "llama-3.1-8b-instant",
+//                 messages: [
+//                     {
+//                         role: "system",
+//                         content: `You are an inline code completion assistant. given the following user trying into a textfield, take the context so far, and predict until the end of the sentence, just give me the rest of the completion:
+
+//             Keep suggestions concise and relevant.`,
+//                     },
+//                     {
+//                         role: "user",
+//                         content: `Current text: "${text}"`,
+//                     },
+//                 ],
+//             }),
+//         });
+//         const data = await response.json();
+//         console.log(data)
+//         console.log(data.choices[0].message.content)
+//         // const suggestion = JSON.parse(data.choices[0].message.content)[0];
+//         return data.choices[0].message.content || "";
+//     }
+// }
+chrome.runtime.sendMessage({ action: "fetchSuggestions", text: userInput }, (response) => {
+    if (response.success) {
+        console.log("Secure API Data:", response.data);
+        return response.data
+    } else {
+        console.error("API Error:", response.error);
+        throw new Error("API Error");
+
+        return ""
     }
-}
+});
 
 function showInlineSuggestion(inputElement, suggestion) {
     removeSuggestion();
