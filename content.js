@@ -20,82 +20,19 @@ if (lastInlineRequest) {
     clearTimeout(lastInlineRequest);
 }
 
-// async function fetchSuggestions(text) {
-//     try {
-//         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-//             },
-//             body: JSON.stringify({
-//                 model: "google/gemini-2.0-flash-lite-preview-02-05:free",
-//                 messages: [
-//                     {
-//                         role: "system",
-//                         content: `You are an inline code completion assistant. Return ONLY a SINGLE completion item containing:
-//                                   - text: The suggested completion text
-
-//                                   The completion should:
-//                                   1. Be a natural continuation of the current code
-//                                   2. Be contextually relevant
-//                                   3. Complete the current line or add a new line if appropriate
-//                                   4. Be mindful of the punctuation 
-
-//                                   Keep suggestions concise and relevant.`,
-//                     },
-//                     {
-//                         role: "user",
-//                         content: `Current text: "${text}"`,
-//                     },
-//                 ],
-//             }),
-//         });
-//         const data = await response.json();
-//         console.log(data)
-//         console.log(data.choices[0].message.content)
-//         return data.choices[0].message.content;
-//     } catch (error) {
-//         console.error("Autocomplete error openrouter:", error);
-//         const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-//             method: "POST",
-//             headers: {
-//                 "Content-Type": "application/json",
-//                 Authorization: `Bearer ${GROQ_API_KEY}`,
-//             },
-//             body: JSON.stringify({
-//                 model: "llama-3.1-8b-instant",
-//                 messages: [
-//                     {
-//                         role: "system",
-//                         content: `You are an inline code completion assistant. given the following user trying into a textfield, take the context so far, and predict until the end of the sentence, just give me the rest of the completion:
-
-//             Keep suggestions concise and relevant.`,
-//                     },
-//                     {
-//                         role: "user",
-//                         content: `Current text: "${text}"`,
-//                     },
-//                 ],
-//             }),
-//         });
-//         const data = await response.json();
-//         console.log(data)
-//         console.log(data.choices[0].message.content)
-//         // const suggestion = JSON.parse(data.choices[0].message.content)[0];
-//         return data.choices[0].message.content || "";
-//     }
-// }
-chrome.runtime.sendMessage({ action: "fetchSuggestions", text: userInput }, (response) => {
-    if (response.success) {
-        console.log("Secure API Data:", response.data);
-        return response.data
-    } else {
-        console.error("API Error:", response.error);
-        throw new Error("API Error");
-
-        return ""
-    }
+async function fetchDataFromBackground(userInput) {
+    const dataToSend = {
+        userInput: userInput,
+    };
+    return new Promise((resolve) => {
+        chrome.runtime.sendMessage({ action: "fetchSuggestions", text: dataToSend }, (response) => {
+            console.log('fetch', response)
+            resolve(response);
+        });
+    });
+}
+chrome.runtime.sendMessage({ action: "wakeUp" }, (response) => {
+    console.log("Message sent to Service Worker, response:", response);
 });
 
 function showInlineSuggestion(inputElement, suggestion) {
@@ -110,7 +47,7 @@ function showInlineSuggestion(inputElement, suggestion) {
 
     // Positioning
     const rect = inputElement.getBoundingClientRect();
-    overlay.style.left = `${rect.left + window.scrollX}px`;
+    overlay.style.left = `${rect.left}px`;
     overlay.style.top = `${rect.top + window.scrollY}px`;
     overlay.style.paddingLeft = `${inputElement.value.length * 8}px`;
     console.log(overlay.style.left)
@@ -125,13 +62,12 @@ document.addEventListener("input", async (event) => {
         if (lastInlineRequest) {
             clearTimeout(lastInlineRequest);
         }
-
         // Set a new timeout
         lastInlineRequest = setTimeout(async () => {
-            const suggestion = await fetchSuggestions(userText);
-            console.log(suggestion);
-            if (suggestion) {
-                showInlineSuggestion(event.target, suggestion);
+            const suggestion = await fetchDataFromBackground(userText);
+            console.log(suggestion)
+            if (suggestion.res) {
+                showInlineSuggestion(event.target, suggestion.res);
             }
         }, INLINE_SUGGESTION_DELAY);
     }
@@ -201,7 +137,8 @@ function removeSuggestion() {
 function acceptSuggestion(inputElement) {
     const overlay = document.getElementById("inline-autocomplete");
     if (overlay) {
-        inputElement.value += overlay.innerText; // Append suggestion
+        // inputElement.innerText = inputElement.value + overlay.innerText;// Append suggestion
+        inputElement.value += overlay.innerText;
         removeSuggestion();
     }
 }
