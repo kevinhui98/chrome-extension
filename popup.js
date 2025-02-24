@@ -28,3 +28,20 @@ if (OPENROUTER_API_KEY.startsWith('sk-')) {
     keyStatus.innerHTML = `You have a saved key ${OPENROUTER_API_KEY}`;
     console.log(OPENROUTER_API_KEY);
 }
+const googleSignIn = document.querySelector('#authButton')
+googleSignIn.addEventListener('click', () => {
+    console.log('auth')
+    // chrome.runtime.sendMessage({ action: 'authenticate' });
+    async () => {
+        try {
+            const token = await chrome.runtime.getBackgroundPage().getAuthToken();
+            chrome.scripting.executeScript({
+                target: { tabId: chrome.tabs.getCurrent().id },
+                function: readDocument,
+                args: [token],
+            });
+        } catch (error) {
+            console.error('Authentication error:', error);
+        }
+    }
+})

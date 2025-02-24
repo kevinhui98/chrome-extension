@@ -1,5 +1,5 @@
 {
-  "name": "Hello Extensions of the world!",
+  "name": "Auto complete",
   "description": "Base Level Extension",
   "version": "1.0",
   "manifest_version": 3,
@@ -10,8 +10,14 @@
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["storage", "scripting", "activeTab"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "identity",
+    "identity.email",
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": ["<all_urls>", "https://docs.google.com/*"],
   "content_scripts": [
     {
       "matches": ["<all_urls>", "https://docs.google.com/document/*"],

@@ -3,11 +3,6 @@ let lastInlineRequest = null;
 let suggestionBox = null;
 let activeInput = null;
 let userInput = ""
-const OPENROUTER_API_KEY = "";
-// const OPENROUTER_API_KEY = "";
-const GROQ_API_KEY = ""
-// llama-3.1-8b-instant
-console.log(GROQ_API_KEY)
 async function debounce(fn, delay) {
     let timer;
     return (...args) => {
@@ -85,49 +80,50 @@ document.addEventListener("keydown", (event) => {
         removeSuggestion();
     }
 });
+
+function readDocumentContent() {
+    //  Important:  Identifying the correct element containing the document text
+    //  can be tricky in Google Docs.  You'll likely need to inspect the page's HTML
+    //  using your browser's developer tools (right-click on the document, "Inspect")
+    //  to find the appropriate selector.
+
+    //  Example selectors (these might need adjustment based on Google Docs updates):
+    const docBodyElement = document.querySelector('.kix-appview-editor'); //  Try this general selector
+    const metaTag = document.querySelector('meta[property="og:description"]').content
+    console.log(metaTag)
+    if (docBodyElement) {
+        const textContent = docBodyElement.textContent; // Or .innerText (try both)
+        console.log("Document Content:", textContent);
+        alert("Document Content in Console (Check DevTools Console)"); // For simple feedback
+
+        //  You can now do something with this textContent, like send it to your background script
+        //  or display it in your extension's popup.
+    } else {
+        console.error("Could not find document body element.");
+        alert("Could not find document text. Inspect the page and update the selector in content.js.");
+    }
+}
+// Example:  Trigger reading content when the extension icon in the toolbar is clicked (if you have a popup)
+readDocumentContent();
 // window.addEventListener('load', () => {
-//     // Wait for the iframe to be loaded
-//     const iframe = document.querySelector('iframe.docs-texteventtarget-iframe');
+//     const docBodyElement = document.querySelector('.kix-appview-editor');
+//     if (docBodyElement) {
+//         const textContent = docBodyElement.textContent; // Or .innerText (try both)
+//         console.log("Document Content:", textContent);
+//         alert("Document Content in Console (Check DevTools Console)"); // For simple feedback
 
-//     if (iframe) {
-//         // If iframe src is about:blank, check if it gets replaced with an actual document
-//         iframe.addEventListener('load', () => {
-//             const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-
-//             if (iframeDoc) {
-//                 console.log("Iframe content loaded, setting up MutationObserver.");
-
-//                 // Set up MutationObserver to monitor changes within the iframe
-//                 const observer = new MutationObserver(mutationsList => {
-//                     mutationsList.forEach(mutation => {
-//                         if (mutation.type === "childList") {
-//                             mutation.addedNodes.forEach(node => {
-//                                 if (node.tagName === "DIV" && node.isContentEditable) {
-//                                     console.log("New contenteditable div added in iframe:", node);
-//                                 }
-//                             });
-//                         }
-//                     });
-//                 });
-
-//                 // Observe changes within the iframe body
-//                 observer.observe(iframeDoc.body, {
-//                     childList: true,
-//                     subtree: true,
-//                 });
-//             } else {
-//                 console.error("Unable to access iframe content.");
-//             }
-//         });
+//         //  You can now do something with this textContent, like send it to your background script
+//         //  or display it in your extension's popup.
 //     } else {
-//         console.error("Iframe element not found.");
+//         console.error("Could not find document body element.");
+//         alert("Could not find document text. Inspect the page and update the selector in content.js.");
 //     }
 // });
 
-// document.addEventListener("focus", (event) => {
-//     console.log("Focused on element:", event.target);
+document.addEventListener("focus", (event) => {
+    console.log("Focused on element:", event.target);
 
-// }, true);
+}, true);
 
 function removeSuggestion() {
     const existingOverlay = document.getElementById("inline-autocomplete");
