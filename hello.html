@@ -1,7 +1,11 @@
 <html>
   <body>
-    <h1>Enter your API KEY</h1>
-    <input type="password" id="openrouter-api-key" placeholder="Enter OpenRouter API Key" value=`${OPENROUTER_API_KEY}`>
+    <div id="introduction" style="width: 250px;">
+      <h2>Welcome to your personal Auto complete helper,</h2>
+      <h2>Click Tab whenever you want to accept the complete and click Escape when you want to reject it.</h2>
+    </div>
+    <h4>Enter your API KEY</h4>
+    <input type="password" id="openrouter-api-key" placeholder="Enter OpenRouter API Key" >
     <button id="save-api-key">Submit</button>
     <div id="api-key-display"></div>
     <button id="authButton">Authorize Google Docs</button>

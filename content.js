@@ -1,4 +1,4 @@
-const INLINE_SUGGESTION_DELAY = 2000;
+const INLINE_SUGGESTION_DELAY = 1000;
 let lastInlineRequest = null;
 let suggestionBox = null;
 let activeInput = null;
@@ -10,17 +10,19 @@ async function debounce(fn, delay) {
         timer = setTimeout(() => fn(...args), delay);
     };
 }
-// Debounce suggestions
-if (lastInlineRequest) {
-    clearTimeout(lastInlineRequest);
-}
+console.log("Current URL:", window.location.href.split('/')[2]);
+
 
 async function fetchDataFromBackground(userInput) {
-    const dataToSend = {
-        userInput: userInput,
-    };
+    let lastWord = userInput[userInput.length - 1]
+    console.log(lastWord)
+    if (lastWord != " ") {
+        let inputList = userInput.split(" ")
+        lastWord = inputList[inputList.length - 1]
+    }
+    console.log(lastWord)
     return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ action: "fetchSuggestions", text: dataToSend }, (response) => {
+        chrome.runtime.sendMessage({ action: "fetchSuggestions", userInput: userInput, site: window.location.href, lastWord: lastWord }, (response) => {
             console.log('fetch', response)
             resolve(response);
         });
@@ -35,16 +37,17 @@ function showInlineSuggestion(inputElement, suggestion) {
     console.log(suggestion.replace(inputElement.value, ""))
     const overlay = document.createElement("span");
     overlay.id = "inline-autocomplete";
-    overlay.innerHTML = suggestion.replace(inputElement.value, ""); // Show only the remaining suggestion
+    overlay.innerText = suggestion.replace(inputElement.value, ""); // Show only the remaining suggestion
     overlay.style.color = "gray";
     overlay.style.pointerEvents = "none";
     overlay.style.position = "absolute";
 
     // Positioning
     const rect = inputElement.getBoundingClientRect();
-    overlay.style.left = `${rect.left}px`;
+    overlay.style.left = `${rect.left + window.scrollX}px`;
     overlay.style.top = `${rect.top + window.scrollY}px`;
-    overlay.style.paddingLeft = `${inputElement.value.length * 8}px`;
+    const userText = inputElement.innerText || inputElement.value;
+    overlay.style.paddingLeft = `${userText.length * 8}px`;
     console.log(overlay.style.left)
     document.body.appendChild(overlay);
 }
@@ -71,7 +74,7 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Tab") {
         const inputElement = document.activeElement;
         const overlay = document.getElementById("inline-autocomplete");
-
+        console.log(overlay.innerText)
         if (overlay && inputElement) {
             event.preventDefault(); // Prevent default tabbing only if we have a suggestion
             acceptSuggestion(inputElement);
@@ -81,30 +84,30 @@ document.addEventListener("keydown", (event) => {
     }
 });
 
-function readDocumentContent() {
-    //  Important:  Identifying the correct element containing the document text
-    //  can be tricky in Google Docs.  You'll likely need to inspect the page's HTML
-    //  using your browser's developer tools (right-click on the document, "Inspect")
-    //  to find the appropriate selector.
+// function readDocumentContent() {
+//     //  Important:  Identifying the correct element containing the document text
+//     //  can be tricky in Google Docs.  You'll likely need to inspect the page's HTML
+//     //  using your browser's developer tools (right-click on the document, "Inspect")
+//     //  to find the appropriate selector.
 
-    //  Example selectors (these might need adjustment based on Google Docs updates):
-    const docBodyElement = document.querySelector('.kix-appview-editor'); //  Try this general selector
-    const metaTag = document.querySelector('meta[property="og:description"]').content
-    console.log(metaTag)
-    if (docBodyElement) {
-        const textContent = docBodyElement.textContent; // Or .innerText (try both)
-        console.log("Document Content:", textContent);
-        alert("Document Content in Console (Check DevTools Console)"); // For simple feedback
+//     //  Example selectors (these might need adjustment based on Google Docs updates):
+//     const docBodyElement = document.querySelector('.kix-appview-editor'); //  Try this general selector
+//     const metaTag = document.querySelector('meta[property="og:description"]').content
+//     console.log(metaTag)
+//     if (docBodyElement) {
+//         const textContent = docBodyElement.textContent; // Or .innerText (try both)
+//         console.log("Document Content:", textContent);
+//         alert("Document Content in Console (Check DevTools Console)"); // For simple feedback
 
-        //  You can now do something with this textContent, like send it to your background script
-        //  or display it in your extension's popup.
-    } else {
-        console.error("Could not find document body element.");
-        alert("Could not find document text. Inspect the page and update the selector in content.js.");
-    }
-}
-// Example:  Trigger reading content when the extension icon in the toolbar is clicked (if you have a popup)
-readDocumentContent();
+//         //  You can now do something with this textContent, like send it to your background script
+//         //  or display it in your extension's popup.
+//     } else {
+//         console.error("Could not find document body element.");
+//         alert("Could not find document text. Inspect the page and update the selector in content.js.");
+//     }
+// }
+// // Example:  Trigger reading content when the extension icon in the toolbar is clicked (if you have a popup)
+// readDocumentContent();
 // window.addEventListener('load', () => {
 //     const docBodyElement = document.querySelector('.kix-appview-editor');
 //     if (docBodyElement) {

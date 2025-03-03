@@ -92,7 +92,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('in async')
     if (message.action === "fetchSuggestions") {
         (async () => {
-            console.log('in if')
+            console.log('user Input ', message.userInput)
+            let prompt = [
+                {
+                    role: "system",
+                    content: `you are an AI assistant embedded in a Chrome extension, designed to provide intelligent autocomplete suggestions based on user input and website context. Your goal is to enhance user productivity by generating relevant and context-aware text predictions.
+
+                    Your Tasks:
+                    Monitor User Input:
+
+                    Read the text the user is typing in real time.
+                    Predict the next words or phrases based on context and common patterns.
+                    Analyze Website Context:
+
+                    Read the current webpage URL.
+                    Determine if the website belongs to a common category (e.g., social media, e-commerce, documentation, forums, email, search engines).
+
+                    Generate Intelligent Predictions:
+
+                    The user will also provide the last word that was written, if the word is a full word or it includes punctuations like (. , / ! ? ; :) begin the response with a space, if the word is a space or an incomplete word don't begin with a space.
+                    
+                    Maintain Privacy & Relevance:
+                    Only process user input locally without storing or sending data externally.
+                    Ensure suggestions are concise, non-intrusive, and improve efficiency without overwhelming the user.
+                    Your goal is to create a seamless, intuitive, and intelligent autocomplete experience that adapts to different website environments. Your response should only consist of the sentence completion do not add any punctuations to the`,
+                },
+                {
+                    role: "user",
+                    content: `User input is "${message.userInput}"
+                    website domain: ${message.site.split('/')[2]} 
+                    website: ${message.site} 
+                            last word of User's input is ${message.lastWord}`,
+                },
+            ]
             try {
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: "POST",
@@ -102,16 +134,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     },
                     body: JSON.stringify({
                         model: "google/gemini-2.0-flash-lite-preview-02-05:free",
-                        messages: [
-                            {
-                                role: "system",
-                                content: `You are an inline sentence auto completion assistant. given the following user typing into a textfield, take the context so far, and predict until the end of the sentence, just give me the rest of the completion, Be contextually relevant, Be mindful of the punctuation, Keep suggestions concise and relevant.`,
-                            },
-                            {
-                                role: "user",
-                                content: `Current text: "${message.userInput}"`,
-                            },
-                        ],
+                        messages: prompt,
                     }),
                 })
                 const data = await response.json();
@@ -124,22 +147,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${GROQ_API_KEY}`,
+                        Authorization: `Bearer ${CONFIG.GROQ_API_KEY}`,
                     },
                     body: JSON.stringify({
                         model: "llama-3.1-8b-instant",
-                        messages: [
-                            {
-                                role: "system",
-                                content: `You are an inline sentence auto completion assistant. given the following user trying into a textfield, take the context so far, and predict until the end of the sentence, just give me the rest of the completion:
-
-                    Keep suggestions concise and relevant.`,
-                            },
-                            {
-                                role: "user",
-                                content: `Current text: "${text}"`,
-                            },
-                        ],
+                        messages: prompt,
                     }),
                 });
                 const data = await response.json();
